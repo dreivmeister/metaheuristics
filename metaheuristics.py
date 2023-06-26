@@ -85,7 +85,7 @@ def bounded_uniform_convolution(v, p, r, min, max):
         if p >= np.random.uniform():
             n = np.random.uniform(-r, r)
             vin = v[i]+n
-            while vin < min and vin > max:
+            while vin < min or vin > max:
                 n = np.random.uniform(-r, r)
                 vin = v[i]+n
             v[i] = vin
@@ -139,5 +139,106 @@ def hill_climbing_w_random_restarts(T, Generate, Tweak, Copy, Quality, optimal, 
         S = Generate()
     return Best
 
+
+def gaussian_convolution(v, p, var, min, max):
+    for i in range(len(v)):
+        if p >= np.random.uniform():
+            n = np.random.normal(loc=0,scale=np.sqrt(var))
+            vin = v[i]+n
+            while vin < min or vin > max:
+                n = np.random.normal(loc=0,scale=np.sqrt(var))
+                vin = v[i]+n
+            v[i] = vin
+    return v
+            
+# generates two random numbers (gaussian)
+def box_muller_marsaglia_polar_method(mean, var):
+    x = np.random.uniform(-1.0, 1.0)
+    y = np.random.uniform(-1.0, 1.0)
+    w = x**2 + y**2
+    while w < 0 or w > 1:
+        x = np.random.uniform(-1.0, 1.0)
+        y = np.random.uniform(-1.0, 1.0)
+        w = x**2 + y**2
+    
+    g = mean + x * var * np.sqrt(-2*np.log(w)/w)
+    h = mean + y * var * np.sqrt(-2*np.log(w)/w)
+    return g, h
+
+
+def simulated_annealing(t, Decrease, Generate, Tweak, Copy, Quality, optimal, maxiter=100):
+    # t - starting temperature
+    
+    S = Generate()
+    Best = S
+    QB = Quality(Best)
+    for _ in range(maxiter):
+        R = Tweak(Copy(S))
+        QR = Quality(R)
+        QS = Quality(S)
+        if QR > QS or np.random.uniform() < np.exp((QR-QS)/t):
+            S = R
+        t = Decrease(t)
+        if t <= 0:
+            break
+        if QS > QB:
+            Best = S
+            QB = QS
+            if QB >= optimal:
+                return Best
+    return Best
+
+class FixedLengthQueue:
+    def __init__(self, capacity) -> None:
+        self.capacity = capacity
+        self.queue = []
+        self.num = 0
+        
+    def enqueue(self, value):
+        if self.num+1 >= self.capacity:
+            del self.queue[0]
+        else:
+            self.num += 1
+        self.queue.append(value)
+    
+    def dequeue(self):
+        assert len(self.queue)!= 0
+        item = self.queue[0]
+        del self.queue[0]
+        self.num -= 1
+        return item
+
+    def isin(self, value):
+        return value in self.queue
             
         
+
+def tabu_search(l, n, Generate, Tweak, Copy, Quality, optimal, maxiter=100):
+    # l - max len of taboo list
+    # n - number of tweaks
+    queue = FixedLengthQueue(l)
+    S = Generate()
+    Best = S
+    QB = Quality(Best)
+    queue.enqueue(S)
+    for _ in range(maxiter):
+        R = Tweak(Copy(S))
+        for i in range(n):
+            W = Tweak(Copy(S))
+            if not queue.isin(W) and (Quality(W) > Quality(R) or queue.isin(R)):
+                R = W
+            if not queue.isin(R):
+                S = R
+                queue.enqueue(R)
+            QS = Quality(S)
+            if QS > QB:
+                Best = S
+                QB = QS
+                if QB >= optimal:
+                    return Best
+    return Best
+                
+            
+    
+    
+    
