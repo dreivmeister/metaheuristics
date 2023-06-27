@@ -392,4 +392,6 @@ def uniform_crossover(p, v, w):
             v[i],w[i] = w[i],v[i]
     return v, w
             
+
+
     
