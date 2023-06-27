@@ -489,9 +489,95 @@ def genetic_algorithm_w_elitism(popsize, nelite, Choose_mu, Generate, AssessFitn
     return Best
         
         
+def scatter_search(Seeds, initsize, t, n, m, GenDiverse, AssessFitness, Fitness, Crossover, Copy, Mutate, choose_fit, choose_div, Tweak, optimal, maxiter):
+    P = Seeds
+    for _ in range(int(initsize-len(Seeds))):
+        P.append(GenDiverse(P))
+    Best = None
+    P_fitness = AssessFitness(P)
+    for i in range(len(P)):
+        P[i] = hill_climbing(P[i], Tweak, Copy, Fitness, optimal)
+        P_fitness[i] = Fitness(P[i])
+        if Best is None or P_fitness[i] > Fitness(Best):
+            Best = P[i]
     
-    
-    
-    
+    for _ in range(maxiter):
+        B = choose_fit(n, P, P_fitness)
+        D = choose_div(m, P) # most diverse
+        P = B + D
+        Q = []
+        for i in range(len(P)):
+            for j in range(len(P)):
+                if i == j: continue
+                
+                Ca, Cb = Crossover(Copy(P[i]), Copy(P[j]))
+                Ca = Mutate(Ca)
+                Cb = Mutate(Cb)
+                Ca = hill_climbing(Ca, Tweak, Copy, Fitness, optimal, maxiter=t)
+                Cb = hill_climbing(Cb, Tweak, Copy, Fitness, optimal, maxiter=t)
+                if Fitness(Ca) > Fitness(Best):
+                    Best = Ca
+                    if Fitness(Best) >= optimal:
+                        return Best
+                if Fitness(Cb) > Fitness(Best):
+                    Best = Cb
+                    if Fitness(Best) >= optimal:
+                        return Best
+                Q.extend([Ca, Cb])
+        P += Q
+    return Best
 
+
+
+def differential_evolution(a, popsize, Generate, Copy, Crossover, AssessFitness, Fitness, optimal, maxiter):
+    # a - mutation rate
+    # popsize - population size
     
+    P = Generate(popsize)
+    Q = None # parents
+    Best = None
+    
+    for _ in range(maxiter):
+        P_fitness = AssessFitness(P)
+        for i in range(len(P)):
+            if Q is not None and Fitness(Q[i]) > P_fitness[i]:
+                P[i] = Q[i]
+            if Best is None or P_fitness[i] > Fitness(Best):
+                Best = P[i]
+                if Fitness(Best) >= optimal:
+                    return Best
+        Q = P
+        for i in range(len(Q)):
+            alp = random_sample(Q)
+            bet = random_sample(Q)
+            cet = random_sample(Q)
+            d = alp + a*(bet - cet) # mutation
+            P[i], _ = Crossover(d, Copy(Q[i]))
+    return Best
+
+
+
+# Need A Particle Class for that
+def particle_swarm_optimization(swarmsize, al, be, ga, th, ep, Fitness, Generate, optimal, maxiter):
+    P = Generate(swarmsize) # random particles with random velocity
+    Best = None
+    
+    for _ in range(maxiter):
+        for i in range(len(P)):
+            if Best is None or Fitness(P[i].x) > Fitness(Best):
+                Best = P[i]
+                if Fitness(Best) >= optimal:
+                    return Best
+        for i in range(len(P)):
+            x_star = P[i].prev
+            x_plus = P[i].prev_inf
+            x_ex   = P[i].prev_all
+            for j in range(len(P[i].x)):
+                b = np.random.uniform(low=0.0, high=be)
+                c = np.random.uniform(low=0.0, high=ga)
+                d = np.random.uniform(low=0.0, high=th)
+                P[i].v[j] = al * P[i].v[j] + b*(x_star[j] - P[i].x[j]) + c*(x_plus[j] - P[i].x[j]) + d*(x_ex[j] - P[i].x[j])
+        for i in range(len(P)):
+            P[i].x = P[i].x + ep*P[i].v
+    return Best
+
