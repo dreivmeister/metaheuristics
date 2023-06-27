@@ -391,5 +391,106 @@ def uniform_crossover(p, v, w):
         if p >= np.random.uniform():
             v[i],w[i] = w[i],v[i]
     return v, w
-            
+
+def random_shuffle(v):
+    for i in range(len(v)-1,1,-1):
+        j = np.random.randint(0,i)
+        v[i], v[j] = v[j], v[i]
+    return v
+
+def k_uniform_crossover(p, W):
+    l = len(W[0])
+    k = len(W)
+
+    v = np.zeros(k)
+    for i in range(l):
+        if p >= np.random.uniform():
+            for j in range(k):
+                v[j] = W[j][i]
+            v = random_shuffle(v)
+            for j in range(k):
+                w = W[j]
+                w[i] = v[j]
+                W[j] = w
+    return W
+
+def line_recombination(p, v, w):
+    a = np.random.uniform(-p, 1+p)
+    b = np.random.uniform(-p, 1+p)
+    for i in range(len(v)):
+        t = a * v[i] + (1 - a) * w[i]
+        s = b * w[i] + (1 - a) * v[i]
+        if t >= -p and t <= 1+p and s >= -p and t <= 1+p:
+            v[i] = t
+            w[i] = s
+
+    return v, w
+
+def fitness_prop_selection(p, f, gen=False):
+    # selects an individual in proportion to fitness value
+    # p - population vector of individuals
+    # f - fitness value for each individual in p
+    l = len(p) # = len(f)
+
+    if gen:
+        f = np.asarray(f)
+        if f.all() == 0.0:
+            f = np.ones(l)
+        for i in range(1, l):
+            f[i] += f[i-1]
+    n = np.random.uniform(0, f[-1])
+    for i in range(1, l):
+        if n > f[i-1] and n < f[i]:
+            return p[i]
+    return p[0]
+
+def stochastic_universal_sampling():
+    pass
+    # maybe later
+
+def tournament_selection(P, t, Select):
+    # P - population
+    # t - tournament size
+
+    Best = np.random.choice(P)
+    for i in range(2, t+1):
+        Next = np.random.choice(P)
+        if Fitness(Next) > Fitness(Best):
+            Best = Next
+    return Best
+
+
+# AssessFitness - computes fitness for each individual in a population
+# Fitness - computes fitness for one individual in a population
+def genetic_algorithm_w_elitism(popsize, nelite, Choose_mu, Generate, AssessFitness, Fitness, Select, Crossover, Copy, Mutate, optimal, maxiter):
+    # popsize - population size
+    # nelite - number of elites per generation
+    
+
+    assert popsize-nelite % 2 == 0
+    P = Generate(popsize)
+    Best = None
+    for _ in range(maxiter):
+        P_fitness = AssessFitness(P)
+        for i in range(popsize):
+            if Best is None or P_fitness[i] > Fitness(Best):
+                Best = P[i]
+                if Fitness(Best) >= optimal:
+                    return Best
+        Q = Choose_mu(nelite, P, P_fitness)
+        for i in range(int((popsize-nelite)/2)):
+            Pa = Select(P)
+            Pb = Select(P)
+            Ca, Cb = Crossover(Copy(Pa),Copy(Pb))
+            Q.append(Mutate(Ca))
+            Q.append(Mutate(Cb))
+        P = Q
+    return Best
+        
+        
+    
+    
+    
+    
+
     
