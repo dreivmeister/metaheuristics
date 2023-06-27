@@ -1,3 +1,3 @@
 # metaheuristics
 
-# Next: Scatter Search, Differential Evolution and Particle Swarm Optimization
+# next: scatter search, differential evolution and particle swarm optimization
