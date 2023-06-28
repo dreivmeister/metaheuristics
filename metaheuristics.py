@@ -575,3 +575,100 @@ def particle_swarm_optimization(swarmsize, al, be, ga, th, ep, Fitness, Generate
             P[i].x = P[i].x + ep*P[i].v
     return Best
 
+
+def gray_coding(v):
+    # v - boolean vector
+    w = v.copy()
+    for i in range(1,len(w)):
+        if v[i-1]:
+            w[i] = not v[i]
+    return w
+
+
+# for integers
+def random_integer_mutation(v, p, low, high):
+    for i in range(len(v)):
+        if p >= np.random.uniform():
+            v[i] = np.random.randint(low, high)
+    return v
+
+def random_walk_mutation(v, p, b, low, high):
+    for i in range(len(v)):
+        if p >= np.random.uniform():
+            while b < np.random.uniform():
+                n = np.random.choice([1,-1])
+                if v[i] + n <= high:
+                    v[i] += n
+                elif v[i] - n >= low:
+                    v[i] -= n
+    return v
+
+def integer_line_recombination(v, w, p):
+    pass
+    # maybe later
+
+
+class Node:
+    def __init__(self, op, arity):
+        self.op = op
+        self.arity = arity
+        self.children = [None for _ in range(arity)]
+
+    def is_leaf(self):
+        return self.arity == 0
+
+def grow_tree(max_depth, function_set, Copy):
+    def do_grow(curr_depth, max_depth, function_set):
+        if curr_depth >= max_depth:
+            return Copy(np.random.choice(function_set))
+        else:
+            n = Copy(np.random.choice(function_set))
+            l = n.arity # elems in function_set are objects with operation, arity and children
+            for i in range(l):
+                n.children[i] = do_grow(depth+1, max_depth, function_set)
+            return n
+
+def production_ruleset_generation(t, v, p, r, d):
+    # t - set of terminal/leaf symbols (dont expand)
+    # v - vector of unique symbols ['a','b',...]
+    # p - probability of picking terminal symbol
+    # r - (bool) recursion allowed or not
+    # d - (bool) disconnected rules allowed or not
+    def random_symbol(t, h):
+        # random element from t which is not in h
+        pass
+
+    n = np.random.randint(1, 50)
+    rules = []
+    for i in range(n):
+        l = np.random.randint(1, 50)
+        h = []
+        for j in range(l):
+            if (not r and i == n-1) or p < np.random.uniform():
+                h.append(random_symbol(t, h))
+            elif not r:
+                h.append(random_symbol(v[i+1:], h))
+            else:
+                h.append(random_symbol(v, h))
+        rules.append([v[i],h])
+    if not d:
+        for i in range(1,n):
+            if v[i] not in [x[0] for x in rules]:
+                l = np.random.uniform(0,i-1)
+                rules[l] = [rules[l][0],[v[i]]+rules[l][1][1:]]
+    return rules
+
+
+from multiprocessing import Pool
+def pfe(fitness, population):    
+    p = Pool()
+    return p.map(fitness, population) # runs fitness eval for each individual in parallel
+
+
+                
+        
+
+            
+
+
+
