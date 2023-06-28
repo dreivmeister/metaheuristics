@@ -664,7 +664,14 @@ def pfe(fitness, population):
     p = Pool()
     return p.map(fitness, population) # runs fitness eval for each individual in parallel
 
-
+# maybe like that
+def pfe2(fitness, population, num_processes):
+    l = len(population)
+    n = num_processes
+    p = Pool(n)
+    a = [np.floor(l/n)*(i-1)+1 for i in range(n)]
+    b = [np.floor(l/n)*i for i in range(n-1)] + [l]
+    return p.map(lambda population: pfe(fitness, population), [population[i:j] for i,j in zip(a,b)]
                 
         
 
