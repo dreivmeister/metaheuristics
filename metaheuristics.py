@@ -306,7 +306,7 @@ def mu_lambda_evolution_strategy(mu, lam, Choose_mu, InitialPopulation, Fitness,
                 if Fitness(Best) >= optimal:
                     return Best
         
-        Q = Choose_mu(mu, P, P_fitness)
+        Q = Choose_mu(mu, P, Fitness)
         P = []
         for i in range(len(Q)):
             for _ in range(int(lam/mu)):
@@ -326,7 +326,7 @@ def mu_plus_lambda_evolution_strategy(mu, lam, Choose_mu, InitialPopulation, Fit
                 if Fitness(Best) >= optimal:
                     return Best
         
-        Q = Choose_mu(mu, P, P_fitness) # choose mu best individuals
+        Q = Choose_mu(mu, P, Fitness) # choose mu best individuals
         P = Q
         for i in range(len(Q)):
             for _ in range(int(lam/mu)):
@@ -473,7 +473,7 @@ def genetic_algorithm_w_elitism(popsize, nelite, Choose_mu, Generate, Fitness, S
                 Best = P[i]
                 if Fitness(Best) >= optimal:
                     return Best
-        Q = Choose_mu(nelite, P, P_fitness)
+        Q = Choose_mu(nelite, P, Fitness)
         for i in range(int((popsize-nelite)/2)):
             Pa = Select(P)
             Pb = Select(P)
@@ -625,7 +625,7 @@ def grow_tree(max_depth, function_set, Copy):
             n = Copy(np.random.choice(function_set))
             l = n.arity # elems in function_set are objects with operation, arity and children
             for i in range(l):
-                n.children[i] = do_grow(depth+1, max_depth, function_set)
+                n.children[i] = do_grow(curr_depth+1, max_depth, function_set)
             return n
 
 def production_ruleset_generation(t, v, p, r, d):
@@ -671,11 +671,45 @@ def pfe2(fitness, population, num_processes):
     p = Pool(n)
     a = [np.floor(l/n)*(i-1)+1 for i in range(n)]
     b = [np.floor(l/n)*i for i in range(n-1)] + [l]
-    return p.map(lambda population: pfe(fitness, population), [population[i:j] for i,j in zip(a,b)]
+    return p.map(lambda population: pfe(fitness, population), [population[i:j] for i,j in zip(a,b)])
                 
         
+def spatial_breeding(P, Neighbors, Select, Crossover, Copy, Mutate):
+    Q = []
+    for i in range(len(P)):
+        N = Neighbors(P[i], P)
+        # Parents
+        Na = Select(N) 
+        Nb = Select(N)
+        Ca, Cb = Crossover(Copy(Na), Copy(Nb))
+        Q.append(Mutate(Ca))
+    return Q
 
-            
+def random_walk_selection(P, r, Pi, Li, mi, ma):
+    for _ in range(r):
+        d = np.random.randint(low=1,high=len(Li))
+        j = np.random.choice([1,-1])
+        while Li[d]+j <= mi or Li[d]+j >= ma:
+            d = np.random.randint(low=1,high=len(Li))
+            j = np.random.choice([1,-1])
+    return Li
 
-
-
+        
+def one_pop_coevo(popsize, Generate, ExternalFitness, InternalFitness, Join, Breed, optimal, maxiter):
+    P = Generate(popsize)
+    Best = None
+    Best_external = 0
+    for _ in range(maxiter):
+        P_external = ExternalFitness(P)
+        P_internal = InternalFitness(P)
+        for i in range(len(P)):
+            if Best is None or P_external[i] > Best_external:
+                Best = P[i]
+                Best_external = P_external[i]
+                if Best_external >= optimal:
+                    return Best
+        P = Join(P,Breed(P))
+    return Best
+                
+        
+        
