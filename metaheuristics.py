@@ -279,13 +279,12 @@ def iterated_local_search_w_random_restarts(T, Home, Perturb, Generate, Tweak, C
 
 
 # POPULATION METHODS
-def abstract_generational_ea(InitialPopulation, AssesFitness, Fitness, Breed, Join, optimal, maxiter):
+def abstract_generational_ea(InitialPopulation, Fitness, Breed, Join, optimal, maxiter):
     P = InitialPopulation()
     Best = None
     for _ in range(maxiter):
-        P_fitness = AssesFitness(P) # fitness for each individual
         for i in range(len(P)):
-            if Best is None or P_fitness[i] > Fitness(Best):
+            if Best is None or Fitness(P[i]) > Fitness(Best):
                 Best = P[i]
                 if Fitness(Best) >= optimal:
                     return Best
@@ -294,16 +293,15 @@ def abstract_generational_ea(InitialPopulation, AssesFitness, Fitness, Breed, Jo
 
 
 
-def mu_lambda_evolution_strategy(mu, lam, Choose_mu, InitialPopulation, AssesFitness, Fitness, Copy, Mutate, optimal, maxiter):
+def mu_lambda_evolution_strategy(mu, lam, Choose_mu, InitialPopulation, Fitness, Copy, Mutate, optimal, maxiter):
     # mu - number of parents selected
     # lam - number of children generated
     
     P = InitialPopulation(lam)
     Best = None
     for _ in range(maxiter):
-        P_fitness = AssesFitness(P) # fitness for each individual
         for i in range(len(P)):
-            if Best is None or P_fitness[i] > Fitness(Best):
+            if Best is None or Fitness(P[i]) > Fitness(Best):
                 Best = P[i]
                 if Fitness(Best) >= optimal:
                     return Best
@@ -315,16 +313,15 @@ def mu_lambda_evolution_strategy(mu, lam, Choose_mu, InitialPopulation, AssesFit
                 P.append(Mutate(Copy(Q[i])))
     return Best
     
-def mu_plus_lambda_evolution_strategy(mu, lam, Choose_mu, InitialPopulation, AssesFitness, Fitness, Copy, Mutate, optimal, maxiter):
+def mu_plus_lambda_evolution_strategy(mu, lam, Choose_mu, InitialPopulation, Fitness, Copy, Mutate, optimal, maxiter):
     # mu - number of parents selected
     # lam - number of children generated
     
     P = InitialPopulation(lam)
     Best = None
     for _ in range(maxiter):
-        P_fitness = AssesFitness(P) # fitness for each individual
         for i in range(len(P)):
-            if Best is None or P_fitness[i] > Fitness(Best):
+            if Best is None or Fitness(P[i]) > Fitness(Best):
                 Best = P[i]
                 if Fitness(Best) >= optimal:
                     return Best
@@ -337,14 +334,13 @@ def mu_plus_lambda_evolution_strategy(mu, lam, Choose_mu, InitialPopulation, Ass
     return Best
     
     
-def genetic_algorithm(popsize, InitialPopulation, AssesFitness, Fitness, SelectWithReplacement, Crossover, Copy, Mutate, optimal, maxiter):
+def genetic_algorithm(popsize, InitialPopulation, Fitness, SelectWithReplacement, Crossover, Copy, Mutate, optimal, maxiter):
     
     P = InitialPopulation(popsize)
     Best = None
     for _ in range(maxiter):
-        P_fitness = AssesFitness(P) # fitness for each individual
         for i in range(len(P)):
-            if Best is None or P_fitness[i] > Fitness(Best):
+            if Best is None or Fitness(P[i]) > Fitness(Best):
                 Best = P[i]
                 if Fitness(Best) >= optimal:
                     return Best
@@ -463,7 +459,7 @@ def tournament_selection(P, t, Select, Fitness):
 
 # AssessFitness - computes fitness for each individual in a population
 # Fitness - computes fitness for one individual in a population
-def genetic_algorithm_w_elitism(popsize, nelite, Choose_mu, Generate, AssessFitness, Fitness, Select, Crossover, Copy, Mutate, optimal, maxiter):
+def genetic_algorithm_w_elitism(popsize, nelite, Choose_mu, Generate, Fitness, Select, Crossover, Copy, Mutate, optimal, maxiter):
     # popsize - population size
     # nelite - number of elites per generation
     
@@ -472,9 +468,8 @@ def genetic_algorithm_w_elitism(popsize, nelite, Choose_mu, Generate, AssessFitn
     P = Generate(popsize)
     Best = None
     for _ in range(maxiter):
-        P_fitness = AssessFitness(P)
         for i in range(popsize):
-            if Best is None or P_fitness[i] > Fitness(Best):
+            if Best is None or Fitness(P[i]) > Fitness(Best):
                 Best = P[i]
                 if Fitness(Best) >= optimal:
                     return Best
@@ -489,12 +484,12 @@ def genetic_algorithm_w_elitism(popsize, nelite, Choose_mu, Generate, AssessFitn
     return Best
         
         
-def scatter_search(Seeds, initsize, t, n, m, GenDiverse, AssessFitness, Fitness, Crossover, Copy, Mutate, choose_fit, choose_div, Tweak, optimal, maxiter):
+def scatter_search(Seeds, initsize, t, n, m, GenDiverse, Fitness, Crossover, Copy, Mutate, choose_fit, choose_div, Tweak, optimal, maxiter):
     P = Seeds
     for _ in range(int(initsize-len(Seeds))):
         P.append(GenDiverse(P))
     Best = None
-    P_fitness = AssessFitness(P)
+    P_fitness = [0 for i in range(len(P))]
     for i in range(len(P)):
         P[i] = hill_climbing(P[i], Tweak, Copy, Fitness, optimal)
         P_fitness[i] = Fitness(P[i])
@@ -529,7 +524,7 @@ def scatter_search(Seeds, initsize, t, n, m, GenDiverse, AssessFitness, Fitness,
 
 
 
-def differential_evolution(a, popsize, Generate, Copy, Crossover, AssessFitness, Fitness, optimal, maxiter):
+def differential_evolution(a, popsize, Generate, Copy, Crossover, Fitness, optimal, maxiter):
     # a - mutation rate
     # popsize - population size
     
@@ -538,11 +533,10 @@ def differential_evolution(a, popsize, Generate, Copy, Crossover, AssessFitness,
     Best = None
     
     for _ in range(maxiter):
-        P_fitness = AssessFitness(P)
         for i in range(len(P)):
-            if Q is not None and Fitness(Q[i]) > P_fitness[i]:
+            if Q is not None and Fitness(Q[i]) > Fitness(P[i]):
                 P[i] = Q[i]
-            if Best is None or P_fitness[i] > Fitness(Best):
+            if Best is None or Fitness(P[i]) > Fitness(Best):
                 Best = P[i]
                 if Fitness(Best) >= optimal:
                     return Best
