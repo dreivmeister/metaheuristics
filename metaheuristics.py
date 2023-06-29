@@ -711,5 +711,56 @@ def one_pop_coevo(popsize, Generate, ExternalFitness, InternalFitness, Join, Bre
         P = Join(P,Breed(P))
     return Best
                 
+
+
+# NSGA-II
+# select good solution for multiobjective optimization
+def multiobjective_lex_tournament_selection(Best, P, objectives, t, Select, ObjectiveValue):
+    # objectives - list of objectives sorted, most to least preferred
+    
+    for i in range(1,t):
+        Next = Select(P)
+        for j in range(len(objectives)):
+            if ObjectiveValue(objectives[j], Next) > ObjectiveValue(objectives[j], Best):
+                Best = Next
+                break
+            elif ObjectiveValue(objectives[j], Next) < ObjectiveValue(objectives[j], Best):
+                break
+    return Best
+            
         
-        
+# does A pareto dominate B w.r.t objectives O
+def pareto_domination(A, B, O, ObjectiveValue):
+    a = False
+    for i in range(len(O)):
+        if ObjectiveValue(O[i],A) > ObjectiveValue(O[i],B):
+            a = True
+        elif ObjectiveValue(O[i],A) < ObjectiveValue(O[i],B):
+            return False
+    return a
+
+
+# computes pareto front (rank 1)
+def pareto_non_dom_front(G, O, ObjectiveValue):
+    # G - group of individuals to compute front of
+    # O - objectives
+    
+    F = []
+    for i in range(len(G)):
+        F.append(G[i])
+        for j in range(len(F[:-1])):
+            if pareto_domination(F[j], G[i], O, ObjectiveValue):
+                del F[-1]
+                break
+            elif pareto_domination(G[i], F[j], O, ObjectiveValue):
+                del F[j]
+    return F
+
+
+
+
+
+
+
+def GRASP(C, p, m):
+    pass
